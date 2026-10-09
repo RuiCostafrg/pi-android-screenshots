@@ -93,6 +93,33 @@ Tests use temporary directories, not personal screenshots. They cover sorting,
 pagination, original image-byte output, format detection, size limits, cancellation,
 and path restrictions. Integration is checked with Pi's real extension loader.
 
+### Installed-Pi smoke test
+
+```sh
+npm run test:pi
+```
+
+Requires the extension installed in Pi and at least three saved screenshots.
+Creates a disposable in-memory Pi session, verifies tool search, loads the newest
+three images through codemode's nested tool/permission pipeline, and checks that
+a permission hook blocks access. It makes no model request and does not print
+image bytes. Codemode may write temporary image attachments locally.
+
+### Tool missing after reload
+
+If both `screenshots` and Pi-Droid tools are absent, restart Pi rather than
+repeatedly reloading. A running process can retain stale code/tool state after
+an update. Resume the conversation with the installed launcher:
+
+```sh
+~/.pi/agent/bin/pi --session YOUR_SESSION_ID --tools +screenshots
+```
+
+Fresh-session smoke tests distinguish package failures from running-session
+state problems. `tool_search` searches inactive tools only; an already active
+tool need not appear in its results. Codemode's callable-tool search can still
+find it.
+
 ## Files
 
 - `extensions/screenshots/index.ts`: Pi tool registration and image return.

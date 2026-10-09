@@ -16,7 +16,8 @@
     ]
   },
   "scripts": {
-    "test": "node --test extensions/screenshots/core.test.mjs"
+    "test": "node --test extensions/screenshots/core.test.mjs",
+    "test:pi": "node scripts/smoke-pi.mjs"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
