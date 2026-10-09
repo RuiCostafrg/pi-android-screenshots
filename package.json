@@ -1,0 +1,25 @@
+{
+  "name": "pi-android-screenshots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Read-only Pi tool for listing and opening saved Android screenshots in Termux.",
+  "keywords": [
+    "pi-package",
+    "android",
+    "termux",
+    "screenshots"
+  ],
+  "type": "module",
+  "pi": {
+    "extensions": [
+      "./extensions/screenshots/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test extensions/screenshots/core.test.mjs"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*"
+  }
+}
