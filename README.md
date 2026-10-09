@@ -17,8 +17,10 @@ Run `/reload` in an existing Pi session. Use only one installation method to
 avoid duplicate tool registrations. Private GitHub repositories require Git
 access authenticated with your GitHub account.
 
-Requires Pi (tested with 1.1.0), an image-capable model, the native `read` tool,
-and Termux storage access. The default folder is:
+Requires Pi (tested with 1.1.0), an image-capable model, and Termux storage access.
+The tool is discoverable through tool search/codemode even while inactive. To
+keep it declared to the model, add `"+screenshots"` to `defaultTools` in Pi settings
+and run `/reload`. Image loading does not depend on Pi's native `read` tool. The default folder is:
 
 ```text
 /storage/emulated/0/Screenshots/
@@ -69,9 +71,13 @@ image(screenshot);
 ## Safety and privacy
 
 - Only immediate regular nonempty images in the configured folder.
-- Rejects symlinks, traversal, arbitrary paths, and images larger than 25 MiB.
+- Rejects symlinks, traversal, arbitrary paths, and images larger than 5 MiB.
+- Supports PNG, JPEG, GIF and WebP; checks signatures instead of trusting filenames.
 - Does not modify, delete, copy, or upload screenshots itself.
-- Pi's native reader handles format detection, resizing, and permission hooks.
+- Returns original image bytes without automatic resizing, avoiding Termux image
+  resizer failures. Large dimensions may increase model image-token cost.
+- Uses bounded reads and no-follow file opens. The screenshots tool's permission
+  hooks apply; it no longer invokes the native `read` tool or its separate hooks.
 - Listing doesn't send image contents to the model. Reading does: selected images
   may be sent to the configured provider and retained in the Pi session.
 - Files are saved screenshots, not the current live screen.
@@ -83,8 +89,9 @@ image(screenshot);
 npm test
 ```
 
-Tests use temporary directories, not personal screenshots. Integration was also
-verified with Pi's real loader and native image reader using a generated PNG.
+Tests use temporary directories, not personal screenshots. They cover sorting,
+pagination, original image-byte output, format detection, size limits, cancellation,
+and path restrictions. Integration is checked with Pi's real extension loader.
 
 ## Files
 

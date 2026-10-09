@@ -1,9 +1,23 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile, mkdir, symlink, utimes, rm } from "node:fs/promises";
+import { mkdtemp, writeFile, mkdir, symlink, utimes, rm, truncate } from "node:fs/promises";
+import { deflateSync, crc32 } from "node:zlib";
 import os from "node:os";
 import path from "node:path";
-import { listScreenshots, selectScreenshot } from "./core.mjs";
+import { listScreenshots, selectScreenshot, readScreenshot } from "./core.mjs";
+
+function testPng() {
+  function chunk(type, data) {
+    const tag = Buffer.from(type), length = Buffer.alloc(4), checksum = Buffer.alloc(4);
+    length.writeUInt32BE(data.length);
+    checksum.writeUInt32BE(crc32(Buffer.concat([tag, data])));
+    return Buffer.concat([length, tag, data, checksum]);
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(8, 0); header.writeUInt32BE(8, 4); header[8] = 8; header[9] = 2;
+  return Buffer.concat([Buffer.from([137,80,78,71,13,10,26,10]), chunk("IHDR", header),
+    chunk("IDAT", deflateSync(Buffer.alloc(8 * 25))), chunk("IEND", Buffer.alloc(0))]);
+}
 
 async function fixture(run) {
   const directory = await mkdtemp(path.join(os.tmpdir(), "pi-screenshots-"));
@@ -61,3 +75,26 @@ test("empty folders, missing files and cancellation", async () => {
     await assert.rejects(listScreenshots({}, directory, controller.signal), /cancelled/);
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test("returns original image bytes without a resizer or native read tool", () => fixture(async directory => {
+  const png = testPng();
+  await writeFile(path.join(directory, "valid.png"), png);
+  const result = await readScreenshot("valid.png", directory);
+  assert.equal(result.image.type, "image");
+  assert.equal(result.image.mimeType, "image/png");
+  assert.deepEqual(Buffer.from(result.image.data, "base64"), png);
+  assert.ok(result.image.note.includes("valid.png"));
+}));
+test("detects format by bytes rather than filename", () => fixture(async directory => {
+  await writeFile(path.join(directory, "wrong-extension.jpg"), testPng());
+  assert.equal((await readScreenshot("wrong-extension.jpg", directory)).image.mimeType, "image/png");
+}));
+test("rejects invalid image bytes, oversized files, symlinks and cancelled reads", () => fixture(async directory => {
+  await assert.rejects(readScreenshot("old.png", directory), /not a supported/);
+  await assert.rejects(readScreenshot("link.png", directory), /regular file/);
+  await writeFile(path.join(directory, "huge.png"), testPng());
+  await truncate(path.join(directory, "huge.png"), 5 * 1024 * 1024 + 1);
+  await assert.rejects(readScreenshot("huge.png", directory), /5 MiB/);
+  const controller = new AbortController(); controller.abort();
+  await assert.rejects(readScreenshot("old.png", directory, controller.signal), /cancelled/);
+}));
