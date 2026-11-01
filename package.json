@@ -17,7 +17,10 @@
   },
   "scripts": {
     "test": "node --test extensions/screenshots/core.test.mjs",
-    "test:pi": "node scripts/smoke-pi.mjs"
+    "test:pi": "node scripts/smoke-pi.mjs",
+    "lint:oxc": "npx --yes oxlint@latest .",
+    "format": "npx --yes oxfmt@latest .",
+    "format:check": "npx --yes oxfmt@latest --check ."
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": "*",
