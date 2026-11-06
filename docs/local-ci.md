@@ -29,5 +29,7 @@ posts a red `signoff/tests` status automatically.
 
 ```bash
 gh signoff install tests
-gh signoff uninstall
+
+# To remove the requirement later (only the tests context, not others):
+# gh signoff uninstall tests
 ```
