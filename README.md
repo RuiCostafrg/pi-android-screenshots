@@ -1,3 +1,5 @@
+![pi-android-screenshots banner](assets/readme-banner.svg)
+
 # pi-android-screenshots
 
 A local, read-only Pi extension for saved Android screenshots in Termux. Registers
